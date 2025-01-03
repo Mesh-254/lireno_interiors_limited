@@ -38,8 +38,8 @@ class Supplier(models.Model):
 
 class Stock(models.Model):
     stock_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255, unique=True, null=False)
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
-    location = models.CharField(max_length=255, null=True, blank=True)
     last_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
