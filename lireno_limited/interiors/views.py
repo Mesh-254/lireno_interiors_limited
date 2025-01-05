@@ -142,3 +142,70 @@ class PurchaseDetail(generics.RetrieveUpdateDestroyAPIView):
         # Call the original `perform_destroy` to delete the PurchaseItem
         super().perform_destroy(instance)
 
+
+class SaleList(generics.ListCreateAPIView):
+    queryset = SaleItem.objects.all()
+    serializer_class = SaleItemSerializer
+
+    def perform_create(self, serializer):
+        stock = self.request.data.get('stock')
+        quantity = self.request.data.get('quantity')
+
+        try:
+            stock = Stock.objects.get(stock_id=stock)
+
+        except Stock.DoesNotExist:
+            raise ValidationError(
+                {"stock": "The specified stock does not exist."})
+
+        if int(quantity) < 1:
+            raise ValidationError(
+                {"quantity": "The quantity must be greater than 0."})
+        
+        if Decimal(quantity) > stock.quantity:
+            raise ValidationError(
+                {"quantity": f"The sale exceeds the current stock quantity of {stock.quantity}."})
+
+        stock.quantity -= int(quantity)
+        stock.save()
+
+        serializer.save(stock=stock)
+
+
+class SaleDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = SaleItem.objects.all()
+    serializer_class = SaleItemSerializer
+
+    def perform_update(self, serializer):
+        stock = self.request.data.get('stock')
+        quantity = self.request.data.get('quantity')
+
+        try:
+            stock = Stock.objects.get(stock_id=stock)
+
+        except Stock.DoesNotExist:
+            raise ValidationError(
+                {"stock": "The specified stock does not exist."})
+
+        # Fetch the existing purchase item and revert the stock quantity before adding the new quantity
+        sale_item = self.get_object()  # Get the PurchaseItem being updated
+        # Get the old quantity that was in the stock
+        old_quantity = sale_item.quantity
+
+        # Revert the stock quantity by adding the old quantity
+        stock.quantity += old_quantity
+        stock.save()
+
+        stock.quantity -= int(quantity)
+        stock.save()
+
+        serializer.save(stock=stock)
+
+    def perform_destroy(self, instance):
+        stock = instance.stock
+
+        stock.quantity += instance.quantity
+        stock.save()
+
+        # Call the original `perform_destroy` to delete the PurchaseItem
+        super().perform_destroy(instance)

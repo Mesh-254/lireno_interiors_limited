@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from decimal import Decimal
 
 class Category(models.Model):
     category_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -73,7 +74,7 @@ class SaleItem(models.Model):
     date = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        discounted_price = self.perprice * (1 - self.discount / 100)
+        discounted_price = self.perprice * (Decimal(1) - self.discount / Decimal(100))
         self.totalprice = self.quantity * discounted_price
         super().save(*args, **kwargs)
 

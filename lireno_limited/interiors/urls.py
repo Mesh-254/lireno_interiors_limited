@@ -20,7 +20,7 @@ urlpatterns = [
     path('purchases/list/', views.PurchaseList.as_view()),
     path('purchases/<str:pk>/', views.PurchaseDetail.as_view()),
 
-    # path('sales/list/', views.SaleList.as_view()),
-    # path('sales/<str:pk>/', views.SaleDetail.as_view()),
+    path('sales/list/', views.SaleList.as_view()),
+    path('sales/<str:pk>/', views.SaleDetail.as_view()),
 
 ]

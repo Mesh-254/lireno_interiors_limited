@@ -118,6 +118,10 @@ class PurchaseItemSerializer(serializers.ModelSerializer):
 
 
 class SaleItemSerializer(serializers.ModelSerializer):
+    stock = serializers.PrimaryKeyRelatedField(
+        queryset=Stock.objects.all(),
+        required=True
+    )
     class Meta:
         model = SaleItem
         fields = '__all__'
