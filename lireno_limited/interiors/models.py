@@ -28,8 +28,8 @@ class Product(models.Model):
 class Supplier(models.Model):
     supplier_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     supplier_name = models.CharField(max_length=255, null=False)
-    supplier_email = models.EmailField(null=True, blank=True)
-    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    supplier_email = models.EmailField(unique=True, null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=False, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
@@ -43,7 +43,7 @@ class Stock(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.product.product_name} - {self.quantity}"
+        return f"{self.name} - {self.quantity}"
 
 
 class PurchaseItem(models.Model):
