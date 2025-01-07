@@ -1,6 +1,13 @@
 import uuid
 from django.db import models
 from decimal import Decimal
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from rest_framework.authtoken.models import Token
+from django.conf import settings
+
+
+
 
 class Category(models.Model):
     category_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -18,6 +25,7 @@ class Product(models.Model):
     description = models.TextField(null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=False)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
+    created_by = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='products')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -80,3 +88,9 @@ class SaleItem(models.Model):
 
     def __str__(self):
         return f"Sale {self.sale_id}"
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.create(user=instance)
