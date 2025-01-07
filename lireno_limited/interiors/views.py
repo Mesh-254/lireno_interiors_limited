@@ -4,36 +4,53 @@ from rest_framework.response import Response
 from .models import *
 from .serializers import *
 from rest_framework.exceptions import ValidationError
+from django.contrib.auth.models import User
+from rest_framework import permissions
+
+
+
+class UserList(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class UserDetail(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 
 class CategoryList(generics.ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
 
 
 class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class ProductCreate(generics.CreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         image = self.request.FILES.get('image')
-
+        created_by = self.request.user
         category = self.request.data.get('category')
 
         try:
-            category = Category.objects.get(id=category)
+            category = Category.objects.get(category_id=category)
 
-        except category.DoesNotExist:
+        except Category.DoesNotExist:
 
             raise ValidationError(
                 {"category": "The specified category does not exist."})
 
-        serializer.save(category=category, image=image)
+        serializer.save(category=category, image=image, created_by=created_by)
 
 
 class ProductList(generics.ListAPIView):
@@ -41,16 +58,21 @@ class ProductList(generics.ListAPIView):
     # implement code to allow creation of product with image
 
     serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
 
 
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class SupplierList(generics.ListCreateAPIView):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
 
     def perform_create(self, serializer):
         serializer.save()
@@ -59,21 +81,26 @@ class SupplierList(generics.ListCreateAPIView):
 class SupplierDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
 
 
 class StockList(generics.ListCreateAPIView):
     queryset = Stock.objects.all()
     serializer_class = StockSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class StockDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Stock.objects.all()
     serializer_class = StockSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class PurchaseList(generics.ListCreateAPIView):
     queryset = PurchaseItem.objects.all()
     serializer_class = PurchaseItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         stock = self.request.data.get('stock')
@@ -105,6 +132,7 @@ class PurchaseList(generics.ListCreateAPIView):
 class PurchaseDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = PurchaseItem.objects.all()
     serializer_class = PurchaseItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_update(self, serializer):
         stock = self.request.data.get('stock')
@@ -146,6 +174,7 @@ class PurchaseDetail(generics.RetrieveUpdateDestroyAPIView):
 class SaleList(generics.ListCreateAPIView):
     queryset = SaleItem.objects.all()
     serializer_class = SaleItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         stock = self.request.data.get('stock')
@@ -175,6 +204,7 @@ class SaleList(generics.ListCreateAPIView):
 class SaleDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = SaleItem.objects.all()
     serializer_class = SaleItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_update(self, serializer):
         stock = self.request.data.get('stock')
