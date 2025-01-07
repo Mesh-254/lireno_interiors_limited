@@ -1,9 +1,10 @@
-from django.urls import path
+from django.urls import path, include
 from interiors import views
 
 
+
 urlpatterns = [
-    path('categories/', views.CategoryList.as_view()),
+    path('categories/list/', views.CategoryList.as_view()),
     path('categories/<str:pk>/', views.CategoryDetail.as_view()),
 
 
@@ -22,5 +23,11 @@ urlpatterns = [
 
     path('sales/list/', views.SaleList.as_view()),
     path('sales/<str:pk>/', views.SaleDetail.as_view()),
+
+
+    path('users/list/', views.UserList.as_view()),
+    path('users/<str:pk>/', views.UserDetail.as_view()),
+
+    path('auth/', include('rest_framework.urls')),
 
 ]
