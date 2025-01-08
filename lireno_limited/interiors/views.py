@@ -6,6 +6,22 @@ from .serializers import *
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.models import User
 from rest_framework import permissions
+from rest_framework.decorators import api_view
+from rest_framework.reverse import reverse
+
+
+
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'users': reverse('user-list', request=request, format=format),
+        'categories': reverse('category-list', request=request, format=format),
+        'products': reverse('product-list', request=request, format=format),
+        'suppliers': reverse('supplier-list', request=request, format=format),
+        'stocks': reverse('stock-list', request=request, format=format),
+        'purchases': reverse('purchase-list', request=request, format=format),
+        'sales': reverse('sale-list', request=request, format=format),
+    })
 
 
 
@@ -32,18 +48,19 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class ProductCreate(generics.CreateAPIView):
-    queryset = Product.objects.all()
+class ProductList(generics.ListCreateAPIView):
+    queryset = Product.objects.all().order_by('created_at')
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
 
     def perform_create(self, serializer):
         image = self.request.FILES.get('image')
         created_by = self.request.user
-        category = self.request.data.get('category')
+        category_id = self.request.data.get('category')
 
         try:
-            category = Category.objects.get(category_id=category)
+            category = Category.objects.get(category_id=category_id)
 
         except Category.DoesNotExist:
 
@@ -51,15 +68,6 @@ class ProductCreate(generics.CreateAPIView):
                 {"category": "The specified category does not exist."})
 
         serializer.save(category=category, image=image, created_by=created_by)
-
-
-class ProductList(generics.ListAPIView):
-    queryset = Product.objects.all()
-    # implement code to allow creation of product with image
-
-    serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
 
 
 class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -172,7 +180,7 @@ class PurchaseDetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 class SaleList(generics.ListCreateAPIView):
-    queryset = SaleItem.objects.all()
+    queryset = SaleItem.objects.all().order_by('stock_id')
     serializer_class = SaleItemSerializer
     permission_classes = [permissions.IsAuthenticated]
 
