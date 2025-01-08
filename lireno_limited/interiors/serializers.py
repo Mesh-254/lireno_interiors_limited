@@ -3,18 +3,17 @@ from .models import Category, Product, Supplier, Stock, PurchaseItem, SaleItem
 from django.contrib.auth.models import User
 
 
+class UserSerializer(serializers.HyperlinkedModelSerializer):
 
-
-class UserSerializer(serializers.ModelSerializer):
-
-    product = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.all(),
-       many=True
+    products = serializers.HyperlinkedIdentityField(
+        view_name='product-detail',
+        format='html',
+        many=True,
     )
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password', 'product']
+        fields = ['id', 'username', 'email', 'password', 'products']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -23,13 +22,17 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class CategorySerializer(serializers.HyperlinkedModelSerializer):
+    products = serializers.HyperlinkedRelatedField(
+        view_name='product-detail',
+        format='html',
+        many=True,
+        read_only=True
+    )
 
-
-
-class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ['category_id', 'category_name', 'description', 'products']
 
     def create(self, validated_data):
         return Category.objects.create(**validated_data)
@@ -43,15 +46,14 @@ class CategorySerializer(serializers.ModelSerializer):
         return instance
 
 
-class ProductSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.HyperlinkedModelSerializer):
 
     category = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
-        required=False
+        required=True
     )
 
     created_by = serializers.ReadOnlyField(source='created_by.username')
-
 
     class Meta:
         model = Product
@@ -74,7 +76,14 @@ class ProductSerializer(serializers.ModelSerializer):
         return instance
 
 
-class SupplierSerializer(serializers.ModelSerializer):
+class SupplierSerializer(serializers.HyperlinkedModelSerializer):
+    purchases = serializers.HyperlinkedIdentityField(
+        view_name='purchase-detail',
+        format='html',
+        many=True,
+        read_only=True
+    )
+
     class Meta:
         model = Supplier
         fields = '__all__'
@@ -100,7 +109,7 @@ class SupplierSerializer(serializers.ModelSerializer):
         return phone_number
 
 
-class StockSerializer(serializers.ModelSerializer):
+class StockSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Stock
         fields = '__all__'
@@ -115,22 +124,32 @@ class StockSerializer(serializers.ModelSerializer):
         return instance
 
 
-class PurchaseItemSerializer(serializers.ModelSerializer):
+class PurchaseItemSerializer(serializers.HyperlinkedModelSerializer):
 
     stock = serializers.PrimaryKeyRelatedField(
         queryset=Stock.objects.all(),
         required=True
+
     )
 
     supplier = serializers.PrimaryKeyRelatedField(
         queryset=Supplier.objects.all(),
-        required=False,
-        allow_null=True
+        required=False
+    )
+
+    purchase_url = serializers.HyperlinkedIdentityField(
+        view_name='purchase-detail',
+        format='html',
+        read_only=True
     )
 
     class Meta:
         model = PurchaseItem
-        fields = '__all__'
+        fields = ['purchase_url','purchase_id', 'stock',
+                  'supplier', 'quantity', 'perprice', 'totalprice', 'date']
+        extra_kwargs = {
+            'totalprice': {'read_only': True}
+        }
 
     def create(self, validated_data):
         return PurchaseItem.objects.create(**validated_data)
@@ -139,19 +158,31 @@ class PurchaseItemSerializer(serializers.ModelSerializer):
         instance.stock = validated_data.get('stock', instance.stock)
         instance.supplier = validated_data.get('supplier', instance.supplier)
         instance.quantity = validated_data.get('quantity', instance.quantity)
-        instance.perprice = validated_data.get('perprice', instance.perprice)  
+        instance.perprice = validated_data.get('perprice', instance.perprice)
         instance.save()  # totalprice is auto-calculated in the model's save()
         return instance
 
 
-class SaleItemSerializer(serializers.ModelSerializer):
+class SaleItemSerializer(serializers.HyperlinkedModelSerializer):
+    
     stock = serializers.PrimaryKeyRelatedField(
         queryset=Stock.objects.all(),
         required=True
     )
+
+    sale_url = serializers.HyperlinkedIdentityField(
+        view_name='sale-detail',
+        format='html',
+        read_only=True
+    )
+
     class Meta:
         model = SaleItem
-        fields = '__all__'
+        fields = ['sale_url','sale_id', 'stock', 'quantity', 'perprice', 'discount', 'date']
+        extra_kwargs = {
+            'totalprice': {'read_only': True}
+        }
+        
 
     def create(self, validated_data):
         return SaleItem.objects.create(**validated_data)
