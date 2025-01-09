@@ -22,6 +22,6 @@ from interiors import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('interiors.urls')),
+    path('auth/', include('rest_framework.urls')),
     path('auth/login/', obtain_auth_token, name='api_token_auth'),
-    path('', views.api_root),
 ]
